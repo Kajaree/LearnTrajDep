@@ -207,9 +207,12 @@ def train(train_loader, model, optimizer, input_n=20, dct_n=20, lr_now=None, max
         e_err = loss_funcs.euler_error(outputs, all_seq, input_n, dim_used, dct_n)
 
         # update the training loss
-        t_l.update(loss.cpu().data.numpy()[0] * n, n)
-        t_e.update(e_err.cpu().data.numpy()[0] * n, n)
-        t_3d.update(m_err.cpu().data.numpy()[0] * n, n)
+        # t_l.update(loss.cpu().data.numpy()[0] * n, n)
+        # t_e.update(e_err.cpu().data.numpy()[0] * n, n)
+        # t_3d.update(m_err.cpu().data.numpy()[0] * n, n)
+        t_l.update(loss.item() * n, n)
+        t_e.update(e_err.item() * n, n)
+        t_3d.update(m_err.item() * n, n)
 
         bar.suffix = '{}/{}|batch time {:.4f}s|total time{:.2f}s'.format(i + 1, len(train_loader), time.time() - bt,
                                                                          time.time() - st)
@@ -324,8 +327,12 @@ def val(train_loader, model, input_n=20, dct_n=20, is_cuda=False, dim_used=[]):
         e_err = loss_funcs.euler_error(outputs, all_seq, input_n, dim_used, dct_n)
 
         # t_l.update(loss.cpu().data.numpy()[0] * n, n)
-        t_e.update(e_err.cpu().data.numpy()[0] * n, n)
-        t_3d.update(m_err.cpu().data.numpy()[0] * n, n)
+        #t_e.update(e_err.cpu().data.numpy()[0] * n, n)
+        #t_3d.update(m_err.cpu().data.numpy()[0] * n, n)
+
+
+        t_e.update(e_err.item() * n, n)
+        t_3d.update(m_err.item() * n, n)
 
         bar.suffix = '{}/{}|batch time {:.4f}s|total time{:.2f}s'.format(i + 1, len(train_loader), time.time() - bt,
                                                                          time.time() - st)
