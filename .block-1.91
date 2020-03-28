@@ -1,4 +1,0 @@
-#!/bin/bash
-export N_SUBTASKS=1
-export SUBTASK_ID=1
-python3 main.py --data_dir "../data/h3.6m/dataset/" --epoch 10 --input_n 50 --output_n 50 --dct_n 35 --exp "logs/"
