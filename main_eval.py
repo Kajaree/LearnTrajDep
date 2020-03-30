@@ -50,7 +50,7 @@ def main(opt):
 
     # continue from checkpoint
     if opt.is_load:
-        model_path_len = 'checkpoint/pretrained/h36m_in10_out25_dctn35.pth.tar'
+        model_path_len = 'checkpoint/logs/ckpt_main_ar_in50_out50_dctn20_best.pth.tar'
         print(">>> loading ckpt len from '{}'".format(model_path_len))
         if is_cuda:
             ckpt = torch.load(model_path_len)
@@ -285,10 +285,16 @@ def test(train_loader, model, input_n=20, output_n=50, dct_n=20, is_cuda=False, 
         # update loss and testing errors
         for k in np.arange(0, len(eval_frame)):
             j = eval_frame[k]
+            '''
             t_e[k] += torch.mean(torch.norm(pred_eul[:, j, :] - targ_eul[:, j, :], 2, 1)).cpu().data.numpy()[0] * n
             t_3d[k] += torch.mean(torch.norm(
                 targ_p3d[:, j, :, :].contiguous().view(-1, 3) - pred_p3d[:, j, :, :].contiguous().view(-1, 3), 2,
                 1)).cpu().data.numpy()[0] * n
+            '''
+            t_e[k] += torch.mean(torch.norm(pred_eul[:, j, :] - targ_eul[:, j, :], 2, 1)).item() * n
+            t_3d[k] += torch.mean(torch.norm(
+                targ_p3d[:, j, :, :].contiguous().view(-1, 3) - pred_p3d[:, j, :, :].contiguous().view(-1, 3), 2,
+                1)).item() * n
         # t_l += loss.cpu().data.numpy()[0] * n
         N += n
 

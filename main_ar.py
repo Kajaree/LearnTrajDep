@@ -224,23 +224,23 @@ def train(train_dataset, train_loader, model, optimizer, input_n=20, dct_n=20, l
                 outputs = model(ar_inputs)
                 n = outputs.shape[0]
                 outputs = outputs.view(n, -1)
-            # targets = targets.view(n, -1)
-            loss = loss_funcs.sen_loss(outputs, ar_all_seq, dim_used, dct_n)
-            losses.append(loss.item())
-            # calculate loss and backward
-            optimizer.zero_grad()
-            loss.backward()
-            if max_norm:
-                nn.utils.clip_grad_norm(model.parameters(), max_norm=1)
-            optimizer.step()
-            n, _, _ = ar_all_seq.data.shape
+                # targets = targets.view(n, -1)
+                loss = loss_funcs.sen_loss(outputs, ar_all_seq, dim_used, dct_n)
+                losses.append(loss.item())
+                # calculate loss and backward
+                optimizer.zero_grad()
+                loss.backward()
+                if max_norm:
+                    nn.utils.clip_grad_norm(model.parameters(), max_norm=1)
+                optimizer.step()
+                n, _, _ = ar_all_seq.data.shape
 
-            # 3d error
-            m_err = loss_funcs.mpjpe_error(outputs, ar_all_seq, input_n, dim_used, dct_n)
-            m_errs.append(m_err.item())
-            # angle space error
-            e_err = loss_funcs.euler_error(outputs, ar_all_seq, input_n, dim_used, dct_n)
-            e_errs.append(e_err.item())
+                # 3d error
+                m_err = loss_funcs.mpjpe_error(outputs, ar_all_seq, input_n, dim_used, dct_n)
+                m_errs.append(m_err.item())
+                # angle space error
+                e_err = loss_funcs.euler_error(outputs, ar_all_seq, input_n, dim_used, dct_n)
+                e_errs.append(e_err.item())
             # update the training loss
             t_l.update(mean(losses) * n, n)
             t_e.update(mean(e_errs) * n, n)
