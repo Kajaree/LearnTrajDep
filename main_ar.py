@@ -40,7 +40,7 @@ def split_dataset(dataset, stepsize=10, maxsize=20):
         stop = start + stepsize
         data = dataset[start:stop]
         ar_dataset = ARDataset(data[0], data[1], data[2])
-        print(ar_dataset.__len__())
+        #print(ar_dataset.__len__())
         ar_datasets.append(ar_dataset)
         start = stop
     return ar_datasets

@@ -201,9 +201,13 @@ def train(train_loader, model, optimizer, input_n=20, lr_now=None, max_norm=True
         e_err = loss_funcs.euler_error(outputs, all_seq, input_n, dim_used=dim_used, dct_n=dct_n)
 
         # update the training loss
-        t_l.update(loss.cpu().data.numpy()[0] * n, n)
-        t_e.update(e_err.cpu().data.numpy()[0] * n, n)
-        t_3d.update(m_err.cpu().data.numpy()[0] * n, n)
+        # t_l.update(loss.cpu().data.numpy()[0] * n, n)
+        # t_e.update(e_err.cpu().data.numpy()[0] * n, n)
+        # t_3d.update(m_err.cpu().data.numpy()[0] * n, n)
+
+        t_l.update(loss.item() * n, n)
+        t_e.update(e_err.item() * n, n)
+        t_3d.update(m_err.item() * n, n)
 
         bar.suffix = '{}/{}|batch time {:.4f}s|total time{:.2f}s'.format(i + 1, len(train_loader), time.time() - bt,
                                                                          time.time() - st)
@@ -263,9 +267,13 @@ def test(train_loader, model, input_n=20, output_n=50, is_cuda=False, dim_used=[
 
         for k in np.arange(0, len(eval_frame)):
             j = eval_frame[k]
-            t_e[k] += torch.mean(torch.norm(pred_eul[:, j, :] - targ_eul[:, j, :], 2, 1)).cpu().data.numpy()[0] * n
+            # t_e[k] += torch.mean(torch.norm(pred_eul[:, j, :] - targ_eul[:, j, :], 2, 1)).cpu().data.numpy()[0] * n
+            # t_3d[k] += torch.mean(torch.norm(targ_p3d[:, j, :, :].contiguous().view(-1, 3) - pred_p3d[:, j, :, :].
+            #                                  contiguous().view(-1, 3), 2, 1)).cpu().data.numpy()[0] * n
+
+            t_e[k] += torch.mean(torch.norm(pred_eul[:, j, :] - targ_eul[:, j, :], 2, 1)).item() * n
             t_3d[k] += torch.mean(torch.norm(targ_p3d[:, j, :, :].contiguous().view(-1, 3) - pred_p3d[:, j, :, :].
-                                             contiguous().view(-1, 3), 2, 1)).cpu().data.numpy()[0] * n
+                                                 contiguous().view(-1, 3), 2, 1)).item() * n
 
         # update the training loss
         N += n
