@@ -151,6 +151,11 @@ The auto-regression approach performed very poorly. Below are some predicted seq
 
 ![walkingdog_ar_10_100](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/sequence_videos/walking_ar_100.gif)
 
+To run the code for auto regression use the following command:
+```bash
+python demo.py --input_n 10 --output_n 100 --dct_n 20 --data_dir [Path To Your H36M data]/h3.6m/dataset/
+```
+
 The graph below shows the comparison of average losses for sequeses of length 0.5 seconds, 1 seconds, 2 seconds and 4 seconds.
 
 ![average_loss_ar](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/plots/main_ar_avg_errors.png)
