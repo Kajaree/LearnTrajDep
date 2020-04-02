@@ -144,7 +144,10 @@ The graph below shows the comparison of average losses for sequeses of length 0.
 ![average_loss](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/plots/main_avg_errors.png)
 
 The auto-regression approach performed very poorly. Below are some predicted sequences for the action 'walking dog' when we tried predicting a sequence of length 2 seconds and 4 seconds.
+
 ![walkingdog_ar_10_50](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/sequence_videos/w.gif)
+
+
 
 ![walkingdog_ar_10_100](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/sequence_videos/walking_ar_100.gif)
 
