@@ -152,6 +152,7 @@ The auto-regression approach performed very poorly. Below are some predicted seq
 ![walkingdog_ar_10_100](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/sequence_videos/walking_ar_100.gif)
 
 The graph below shows the comparison of average losses for sequeses of length 0.5 seconds, 1 seconds, 2 seconds and 4 seconds.
+
 ![average_loss_ar](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/plots/main_ar_avg_errors.png)
 
 
