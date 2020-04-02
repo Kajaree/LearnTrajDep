@@ -137,11 +137,18 @@ The goal of our lab was to increase the time range we can forecast (say 4 sec) a
 2. We would try an auto-regressive approach to achieve our goal
 
 For a brief introduction to auto-regressive approach, please check [this link](https://eigenfoo.xyz/deep-autoregressive-models/).
-The direct approach did not work well as expected. Below is a predicted sequence for the action 'walking dog' when we tried predicting a sequence of length 2 seconds.
+The direct approach did not work well as expected. Below is a predicted sequence for the action 'eating' when we tried predicting a sequence of length 2 seconds.
+![eating_50_50](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/sequence_videos/eating_50_50.gif)
+
 The graph below shows the comparison of average losses for sequeses of length 0.5 seconds, 1 seconds and 2 seconds.
+![average_loss](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/plots/main_avg_errors.png)
 
 The auto-regression approach performed very poorly. Below are some predicted sequences for the action 'walking dog' when we tried predicting a sequence of length 2 seconds and 4 seconds.
-The graph below shows the comparison of average losses for sequeses of length 0.5 seconds, 1 seconds, 2 seconds and 4 seconds.
+![walkingdog_ar_10_50](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/sequence_videos/w.gif)
 
+![walkingdog_ar_10_100](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/sequence_videos/walking_ar_100.gif)
+
+The graph below shows the comparison of average losses for sequeses of length 0.5 seconds, 1 seconds, 2 seconds and 4 seconds.
+![average_loss_ar](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/plots/main_ar_avg_errors.png)
 
 
