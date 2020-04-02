@@ -130,3 +130,18 @@ Some of our evaluation code and data process code was adapted/ported from [Resid
 
 ### Licence
 MIT
+
+### Our Work
+The goal of our lab was to increase the time range we can forecast (say 4 sec) and we tried two approaches:
+1. We wanted to try to train the model with longer forecasting sequences directly
+2. We would try an auto-regressive approach to achieve our goal
+
+For a brief introduction to auto-regressive approach, please check [this link](https://eigenfoo.xyz/deep-autoregressive-models/).
+The direct approach did not work well as expected. Below is a predicted sequence for the action 'walking dog' when we tried predicting a sequence of length 2 seconds.
+The graph below shows the comparison of average losses for sequeses of length 0.5 seconds, 1 seconds and 2 seconds.
+
+The auto-regression approach performed very poorly. Below are some predicted sequences for the action 'walking dog' when we tried predicting a sequence of length 2 seconds and 4 seconds.
+The graph below shows the comparison of average losses for sequeses of length 0.5 seconds, 1 seconds, 2 seconds and 4 seconds.
+
+
+
