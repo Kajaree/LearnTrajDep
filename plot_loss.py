@@ -26,7 +26,7 @@ def plot_loss(losses, output_n, filename, title):
 def plot_loss_per_action(losses, output_n):
     for act, act_loss in losses.items():
         title = 'Loss per frame for {}'.format(act)
-        filename = "main_ar_errors_{}".format(act)
+        filename = "main_errors_{}".format(act)
         plot_loss(act_loss, output_n, filename, title)
 
 
@@ -50,6 +50,28 @@ def calculate_loss(filename, frames):
     acts = np.unique(np.array(acts))
     return acts.tolist(), losses
 
+def compare_loss():
+    output_n = [50, 100]
+    dir = "checkpoint/plots"
+    plt.figure()
+    for n in output_n:
+        filename = 'checkpoint/logs/main_errors_{:d}.csv'.format(n)
+        filename_ar = 'checkpoint/logs/main_ar_errors_{:d}.csv'.format(n)
+        _, losses = calculate_loss(filename, n)
+        _, losses_ar = calculate_loss(filename_ar, n)
+        mean_losses = np.mean(losses, axis=0)
+        mean_losses_ar = np.mean(losses_ar, axis=0)
+        plt.plot(mean_losses, 'r-', label='direct')
+        plt.plot(mean_losses_ar, 'k-', label='auto-regression')
+        plt.yscale('log')
+        plt.title('Direct vs Autoregression: Output - {} frames'.format(n))
+        plt.xlabel('frames')
+        plt.ylabel('loss')
+        plt.tight_layout(.5)
+        plt.legend(loc='lower right')
+        plt.savefig("{}/{}.png".format(dir, 'dva_{}'.format(n)), bbox_inches='tight')
+        plt.show()
+
 if __name__ == "__main__":
     output_n = [10, 25, 50, 100]
     desired_acts = ['eating', 'posing', 'sitting', 'walkingdog']
@@ -61,11 +83,12 @@ if __name__ == "__main__":
     avg_losses = dict()
     acts = None
     for n in output_n:
-        filename = 'checkpoint/logs/main_ar_errors_{:d}.csv'.format(n)
+        filename = 'checkpoint/logs/main_errors_{:d}.csv'.format(n)
         acts, losses = calculate_loss(filename, n)
         for act in desired_acts:
             acts_losses[act][n] = losses[acts.index(act)]
         mean_losses = np.mean(losses, axis=0)
         avg_losses[n] = mean_losses.tolist()
     plot_loss_per_action(acts_losses, output_n)
-    plot_loss(avg_losses, output_n, 'main_ar_avg_errors', 'Average Loss per frame')
+    plot_loss(avg_losses, output_n, 'main_avg_errors', 'Average Loss per frame')
+    #compare_loss()

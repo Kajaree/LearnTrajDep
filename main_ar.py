@@ -64,7 +64,7 @@ def main(opt):
     sample_rate = opt.sample_rate
 
     # 48 nodes for angle prediction
-    model = nnmodel.GCN(input_feature=(input_n+output_n), hidden_feature=opt.linear_size, p_dropout=opt.dropout,
+    model = nnmodel.GCN(input_feature=dct_n, hidden_feature=opt.linear_size, p_dropout=opt.dropout,
                         num_stage=opt.num_stage, node_n=48)
 
     if is_cuda:

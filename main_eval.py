@@ -50,7 +50,7 @@ def main(opt):
 
     # continue from checkpoint
     if opt.is_load:
-        model_path_len = 'checkpoint/logs/ckpt_main_ar_in50_out50_dctn20_best.pth.tar'
+        model_path_len = 'checkpoint/pretrained/h36m_in10_out25_dctn35.pth.tar'
         print(">>> loading ckpt len from '{}'".format(model_path_len))
         if is_cuda:
             ckpt = torch.load(model_path_len)
@@ -207,12 +207,9 @@ def train(train_loader, model, optimizer, input_n=20, dct_n=20, lr_now=None, max
         e_err = loss_funcs.euler_error(outputs, all_seq, input_n, dim_used, dct_n)
 
         # update the training loss
-        # t_l.update(loss.cpu().data.numpy()[0] * n, n)
-        # t_e.update(e_err.cpu().data.numpy()[0] * n, n)
-        # t_3d.update(m_err.cpu().data.numpy()[0] * n, n)
-        t_l.update(loss.item() * n, n)
-        t_e.update(e_err.item() * n, n)
-        t_3d.update(m_err.item() * n, n)
+        t_l.update(loss.cpu().data.numpy()[0] * n, n)
+        t_e.update(e_err.cpu().data.numpy()[0] * n, n)
+        t_3d.update(m_err.cpu().data.numpy()[0] * n, n)
 
         bar.suffix = '{}/{}|batch time {:.4f}s|total time{:.2f}s'.format(i + 1, len(train_loader), time.time() - bt,
                                                                          time.time() - st)
@@ -285,16 +282,10 @@ def test(train_loader, model, input_n=20, output_n=50, dct_n=20, is_cuda=False, 
         # update loss and testing errors
         for k in np.arange(0, len(eval_frame)):
             j = eval_frame[k]
-            '''
             t_e[k] += torch.mean(torch.norm(pred_eul[:, j, :] - targ_eul[:, j, :], 2, 1)).cpu().data.numpy()[0] * n
             t_3d[k] += torch.mean(torch.norm(
                 targ_p3d[:, j, :, :].contiguous().view(-1, 3) - pred_p3d[:, j, :, :].contiguous().view(-1, 3), 2,
                 1)).cpu().data.numpy()[0] * n
-            '''
-            t_e[k] += torch.mean(torch.norm(pred_eul[:, j, :] - targ_eul[:, j, :], 2, 1)).item() * n
-            t_3d[k] += torch.mean(torch.norm(
-                targ_p3d[:, j, :, :].contiguous().view(-1, 3) - pred_p3d[:, j, :, :].contiguous().view(-1, 3), 2,
-                1)).item() * n
         # t_l += loss.cpu().data.numpy()[0] * n
         N += n
 
@@ -333,12 +324,8 @@ def val(train_loader, model, input_n=20, dct_n=20, is_cuda=False, dim_used=[]):
         e_err = loss_funcs.euler_error(outputs, all_seq, input_n, dim_used, dct_n)
 
         # t_l.update(loss.cpu().data.numpy()[0] * n, n)
-        #t_e.update(e_err.cpu().data.numpy()[0] * n, n)
-        #t_3d.update(m_err.cpu().data.numpy()[0] * n, n)
-
-
-        t_e.update(e_err.item() * n, n)
-        t_3d.update(m_err.item() * n, n)
+        t_e.update(e_err.cpu().data.numpy()[0] * n, n)
+        t_3d.update(m_err.cpu().data.numpy()[0] * n, n)
 
         bar.suffix = '{}/{}|batch time {:.4f}s|total time{:.2f}s'.format(i + 1, len(train_loader), time.time() - bt,
                                                                          time.time() - st)

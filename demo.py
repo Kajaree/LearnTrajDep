@@ -27,7 +27,7 @@ def save_loss_file(act, pred_expmap, targ_expmap, output_n):
     start = 0
     errors = []
     head = ['act', 'frame', 'error']
-    filename = 'checkpoint/logs/main_errors_{:d}.csv'.format(output_n)
+    filename = 'checkpoint/logs/main_errors_10_{:d}.csv'.format(output_n)
     for id in range(output_n):
         err = np.linalg.norm(targ_expmap[:, start:id, :] - pred_expmap[:, start:id, :])
         start = id
@@ -40,7 +40,7 @@ def save_loss_file(act, pred_expmap, targ_expmap, output_n):
 
 def main(opt):
     is_cuda = torch.cuda.is_available()
-    desired_acts = ['eating','sitting', 'posing', 'walkingdog']
+    desired_acts = ['eating', 'posing', 'walkingdog']
     # create model
     print(">>> creating model")
     input_n = opt.input_n
@@ -52,7 +52,7 @@ def main(opt):
                         num_stage=opt.num_stage, node_n=48)
     if is_cuda:
         model.cuda()
-    model_path_len = "checkpoint/pretrained/h36m_in10_out10_dctn20.pth.tar"
+    model_path_len = "checkpoint/logs/ckpt_main_in10_out100_dctn110_best.pth.tar"
     print(">>> loading ckpt len from '{}'".format(model_path_len))
     if is_cuda:
         ckpt = torch.load(model_path_len)
