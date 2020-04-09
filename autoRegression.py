@@ -24,11 +24,11 @@ import utils.data_utils as data_utils
 import utils.viz as viz
 
 
-def save_loss_file(act, pred_expmap, targ_expmap, output_n):
+def save_loss_file(act, pred_expmap, targ_expmap, input_n, output_n):
     start = 0
     errors = []
     head = ['act', 'frame', 'error']
-    filename = 'checkpoint/logs/main_ar_errors_{:d}.csv'.format(output_n)
+    filename = 'checkpoint/logs/main_ar_errors_{:d}_{:d}.csv'.format(input_n, output_n)
     for id in range(output_n):
         err = np.linalg.norm(targ_expmap[:, start:id, :] - pred_expmap[:, start:id, :])
         #err = torch.sum((pred_expmap - targ_expmap)**2)
@@ -41,19 +41,21 @@ def save_loss_file(act, pred_expmap, targ_expmap, output_n):
         writer.writerows(errors)
     return filename
 
-def main(opt, stepsize=10):
+def main(opt):
     is_cuda = torch.cuda.is_available()
     desired_acts = ['eating', 'posing', 'sitting', 'posing', 'walkingdog']
     # create model
     print(">>> creating model")
     input_n = opt.input_n
     output_n = opt.output_n
+    dct_n = opt.dct_n
+    stepsize = dct_n - input_n
     sample_rate = opt.sample_rate
     model = nnmodel.GCN(input_feature=(input_n + stepsize), hidden_feature=opt.linear_size, p_dropout=opt.dropout,
                         num_stage=opt.num_stage, node_n=48)
     if is_cuda:
         model.cuda()
-    model_path_len = "checkpoint/pretrained/h36m_in10_out10_dctn20.pth.tar"
+    model_path_len = "checkpoint/pretrained/h36m_in{}_out{}_dctn{}.pth.tar".format(input_n, stepsize, dct_n)
     print(">>> loading ckpt len from '{}'".format(model_path_len))
     if is_cuda:
         ckpt = torch.load(model_path_len)
@@ -94,20 +96,19 @@ def main(opt, stepsize=10):
             if is_cuda:
                 inputs = inputs.cuda()
                 all_seq = all_seq.cuda()
-            outputs = None
             sLen = input_n + stepsize
             dct_m_in, _ = data_utils.get_dct_matrix(sLen)
             dct_m_in = Variable(torch.from_numpy(dct_m_in)).float().cuda()
             _, idct_m = data_utils.get_dct_matrix(sLen)
             idct_m = Variable(torch.from_numpy(idct_m)).float().cuda()
             for idx in range(iterations):
-                print('index: {}'.format(idx))
-                if idx > 0:
+                if idx == 0:
                     input_dct_seq = inputs
                 else:
                     start = input_n + idx * stepsize
                     stop = start + stepsize
                     input_seq = torch.cat((y_hat, all_seq[:, start:stop, dim_used]), 1)
+                    print(start, stop, y_hat.shape, dct_m_in.shape, input_seq.shape)
                     input_dct_seq = torch.matmul(dct_m_in, input_seq).transpose(1, 2)
                     if is_cuda:
                         input_dct_seq = input_dct_seq.cuda()
@@ -115,17 +116,17 @@ def main(opt, stepsize=10):
                 y_t = y.view(-1, sLen).transpose(0, 1)
                 y_exp = torch.matmul(idct_m, y_t).transpose(0, 1).contiguous().view(-1, dim_used_len,
                                                                                         sLen).transpose(1, 2)
-                y_hat = y_exp[:, input_n:, :]
+                y_hat = y_exp[:, stepsize:, :]
                 if idx == 0:
                     outputs = y_exp
                 else:
-                    outputs = torch.cat((outputs, y_hat), 1)
+                    outputs = torch.cat((outputs, y_exp[:, input_n:, :]), 1)
             pred_expmap = all_seq.clone()
             dim_used = np.array(dim_used)
             pred_expmap[:, :, dim_used] = outputs
             pred_expmap = pred_expmap.cpu().data.numpy()
             targ_expmap = all_seq.cpu().data.numpy()
-            #save_loss_file(act, pred_expmap, targ_expmap, output_n)
+            #save_loss_file(act, pred_expmap, targ_expmap, input_n, output_n)
             if act in desired_acts:
                 for k in range(8):
                     plt.cla()
