@@ -48,7 +48,6 @@ def main(opt, stepsize=10):
     print(">>> creating model")
     input_n = opt.input_n
     output_n = opt.output_n
-    dct_n = opt.dct_n
     sample_rate = opt.sample_rate
     model = nnmodel.GCN(input_feature=(input_n + stepsize), hidden_feature=opt.linear_size, p_dropout=opt.dropout,
                         num_stage=opt.num_stage, node_n=48)
@@ -80,50 +79,52 @@ def main(opt, stepsize=10):
             pin_memory=True)
     dim_used = test_dataset.dim_used
     print(">>> data loaded !")
-    script_name = "error_in{:d}_out{:d}_dctn{:d}".format(opt.input_n, opt.output_n, opt.dct_n)
     model.eval()
     fig = plt.figure()
     ax = plt.gca(projection='3d')
-    filename = None
+    #filename = None
     iterations = int(output_n / stepsize)
+    print('iterations: {}'.format(iterations))
     for act in acts:
         for i, (inputs, targets, all_seq) in enumerate(test_data[act]):
             inputs = Variable(inputs).float()
+            print(inputs.shape)
             all_seq = Variable(all_seq).float()
+            dim_used_len = len(dim_used)
             if is_cuda:
                 inputs = inputs.cuda()
                 all_seq = all_seq.cuda()
             outputs = None
-            y_hat = None
-            if iterations > 1:
-                for i in range(iterations):
-                    if y_hat is None:
-                        y = model(inputs)
-                    else:
-                        y = model(y_hat)
-                    y_hat = y
-                    if outputs is None:
-                        outputs = y_hat
-                    else:
-                        outputs = torch.cat((outputs, y_hat), 2)
-                outputs = torch.cat((inputs[:, :, input_n:], outputs[:, :, input_n*iterations:]), 2)
-            else:
-                outputs = model(inputs)
-            print(outputs.shape)
-            n, seq_len, dim_full_len = all_seq.data.shape
-            dim_used_len = len(dim_used)
-            _, idct_m = data_utils.get_dct_matrix(seq_len)
+            sLen = input_n + stepsize
+            dct_m_in, _ = data_utils.get_dct_matrix(sLen)
+            dct_m_in = Variable(torch.from_numpy(dct_m_in)).float().cuda()
+            _, idct_m = data_utils.get_dct_matrix(sLen)
             idct_m = Variable(torch.from_numpy(idct_m)).float().cuda()
-            outputs_t = outputs.view(-1, seq_len).transpose(0, 1)
-            outputs_exp = torch.matmul(idct_m, outputs_t).transpose(0, 1).contiguous().view(-1, dim_used_len,
-                                                                                            seq_len).transpose(1, 2)
+            for idx in range(iterations):
+                print('index: {}'.format(idx))
+                if idx > 0:
+                    input_dct_seq = inputs
+                else:
+                    start = input_n + idx * stepsize
+                    stop = start + stepsize
+                    input_seq = torch.cat((y_hat, all_seq[:, start:stop, dim_used]), 1)
+                    input_dct_seq = torch.matmul(dct_m_in, input_seq).transpose(1, 2)
+                    if is_cuda:
+                        input_dct_seq = input_dct_seq.cuda()
+                y = model(input_dct_seq)
+                y_t = y.view(-1, sLen).transpose(0, 1)
+                y_exp = torch.matmul(idct_m, y_t).transpose(0, 1).contiguous().view(-1, dim_used_len,
+                                                                                        sLen).transpose(1, 2)
+                y_hat = y_exp[:, input_n:, :]
+                if idx == 0:
+                    outputs = y_exp
+                else:
+                    outputs = torch.cat((outputs, y_hat), 1)
             pred_expmap = all_seq.clone()
             dim_used = np.array(dim_used)
-            print(outputs_exp.shape)
-            pred_expmap[:, :, dim_used] = outputs_exp
-            targ_expmap = all_seq
+            pred_expmap[:, :, dim_used] = outputs
             pred_expmap = pred_expmap.cpu().data.numpy()
-            targ_expmap = targ_expmap.cpu().data.numpy()
+            targ_expmap = all_seq.cpu().data.numpy()
             #save_loss_file(act, pred_expmap, targ_expmap, output_n)
             if act in desired_acts:
                 for k in range(8):
