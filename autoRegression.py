@@ -25,13 +25,12 @@ import utils.viz as viz
 
 
 def save_loss_file(act, pred_expmap, targ_expmap, input_n, output_n):
-    start = 0
+    start = input_n
     errors = []
     head = ['act', 'frame', 'error']
-    filename = 'checkpoint/logs/main_ar_errors_{:d}_{:d}.csv'.format(input_n, output_n)
+    filename = 'checkpoint/errors/main_ar_errors_{:d}_{:d}.csv'.format(input_n, output_n)
     for id in range(output_n):
         err = np.linalg.norm(targ_expmap[:, start:id, :] - pred_expmap[:, start:id, :])
-        #err = torch.sum((pred_expmap - targ_expmap)**2)
         start = id
         errors.append([act, id, err])
 
@@ -72,7 +71,7 @@ def main(opt):
     test_data = dict()
     for act in acts:
         test_dataset = H36motion(path_to_data=opt.data_dir, actions=act, input_n=input_n, output_n=output_n,
-                                 dct_n=(stepsize + input_n), split=1, sample_rate=sample_rate)
+                                 dct_n=dct_n, split=1, sample_rate=sample_rate)
         test_data[act] = DataLoader(
             dataset=test_dataset,
             batch_size=opt.test_batch,
@@ -84,22 +83,19 @@ def main(opt):
     model.eval()
     fig = plt.figure()
     ax = plt.gca(projection='3d')
-    #filename = None
     iterations = int(output_n / stepsize)
     print('iterations: {}'.format(iterations))
     for act in acts:
         for i, (inputs, targets, all_seq) in enumerate(test_data[act]):
             inputs = Variable(inputs).float()
-            print(inputs.shape)
             all_seq = Variable(all_seq).float()
             dim_used_len = len(dim_used)
             if is_cuda:
                 inputs = inputs.cuda()
                 all_seq = all_seq.cuda()
-            sLen = input_n + stepsize
-            dct_m_in, _ = data_utils.get_dct_matrix(sLen)
+            dct_m_in, _ = data_utils.get_dct_matrix(dct_n)
             dct_m_in = Variable(torch.from_numpy(dct_m_in)).float().cuda()
-            _, idct_m = data_utils.get_dct_matrix(sLen)
+            _, idct_m = data_utils.get_dct_matrix(dct_n)
             idct_m = Variable(torch.from_numpy(idct_m)).float().cuda()
             for idx in range(iterations):
                 if idx == 0:
@@ -108,31 +104,32 @@ def main(opt):
                     start = input_n + idx * stepsize
                     stop = start + stepsize
                     input_seq = torch.cat((y_hat, all_seq[:, start:stop, dim_used]), 1)
-                    print(start, stop, y_hat.shape, dct_m_in.shape, input_seq.shape)
                     input_dct_seq = torch.matmul(dct_m_in, input_seq).transpose(1, 2)
                     if is_cuda:
                         input_dct_seq = input_dct_seq.cuda()
                 y = model(input_dct_seq)
-                y_t = y.view(-1, sLen).transpose(0, 1)
+                y_t = y.view(-1, dct_n).transpose(0, 1)
                 y_exp = torch.matmul(idct_m, y_t).transpose(0, 1).contiguous().view(-1, dim_used_len,
-                                                                                        sLen).transpose(1, 2)
+                                                                                        dct_n).transpose(1, 2)
                 y_hat = y_exp[:, stepsize:, :]
                 if idx == 0:
-                    outputs = y_exp
+                    outputs = y_exp[:, input_n:, :]
                 else:
                     outputs = torch.cat((outputs, y_exp[:, input_n:, :]), 1)
             pred_expmap = all_seq.clone()
             dim_used = np.array(dim_used)
-            pred_expmap[:, :, dim_used] = outputs
+            pred_expmap[:, input_n:, dim_used] = outputs
             pred_expmap = pred_expmap.cpu().data.numpy()
             targ_expmap = all_seq.cpu().data.numpy()
-            #save_loss_file(act, pred_expmap, targ_expmap, input_n, output_n)
-            if act in desired_acts:
+            save_loss_file(act, pred_expmap, targ_expmap, input_n, output_n)
+            '''
+                        if act in desired_acts:
                 for k in range(8):
                     plt.cla()
                     figure_title = "action:{}, seq:{},".format(act, (k + 1))
                     viz.plot_predictions(targ_expmap[k, :, :], pred_expmap[k, :, :], fig, ax, figure_title)
                     plt.pause(1)
+            '''
 
 
 if __name__ == "__main__":
