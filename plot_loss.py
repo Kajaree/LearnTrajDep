@@ -25,7 +25,7 @@ def plot_loss(losses, output_n, filename, title):
 
 def plot_loss_per_action(losses, input_n, output_n):
     for act, act_loss in losses.items():
-        title = 'Loss per frame for {}'.format(act)
+        title = 'Loss per frame for {} in Auto Regression \n Input - {} Output - {} frames'.format(act, m, n)
         filename = "main_ar_errors_{}_{}_{}".format(act, input_n, output_n)
         plot_loss(act_loss, output_n, filename, title)
 
@@ -52,11 +52,12 @@ def calculate_loss(filename, frames):
 
 def compare_loss():
     output_n = [50, 100]
+    input_n = 10
     dir = "checkpoint/plots"
     plt.figure()
     for n in output_n:
-        filename = 'checkpoint/logs/main_errors_{:d}.csv'.format(n)
-        filename_ar = 'checkpoint/logs/main_ar_errors_{:d}.csv'.format(n)
+        filename = 'checkpoint/errors/main_errors_{:d}_{:d}.csv'.format(input_n, n)
+        filename_ar = 'checkpoint/errors/main_ar_errors_{:d}_{:d}.csv'.format(input_n, n)
         _, losses = calculate_loss(filename, n)
         _, losses_ar = calculate_loss(filename_ar, n)
         mean_losses = np.mean(losses, axis=0)
@@ -64,12 +65,12 @@ def compare_loss():
         plt.plot(mean_losses, 'r-', label='direct')
         plt.plot(mean_losses_ar, 'k-', label='auto-regression')
         plt.yscale('log')
-        plt.title('Direct vs Autoregression: Output - {} frames'.format(n))
+        plt.title('Direct vs Autoregression: \n Input - {} Output - {} frames'.format(input_n, n))
         plt.xlabel('frames')
         plt.ylabel('loss')
         plt.tight_layout(.5)
         plt.legend(loc='lower right')
-        plt.savefig("{}/{}.png".format(dir, 'dva_{}'.format(n)), bbox_inches='tight')
+        plt.savefig("{}/{}.png".format(dir, 'dva_{:d}_{}'.format(input_n, n)), bbox_inches='tight')
         plt.show()
 
 if __name__ == "__main__":
@@ -93,5 +94,6 @@ if __name__ == "__main__":
                 mean_losses = np.mean(losses, axis=0)
                 avg_losses[n] = mean_losses.tolist()
         plot_loss_per_action(acts_losses, m, output_n)
-        plot_loss(avg_losses, output_n, 'main_avg_errors_input_{:d}'.format(m), 'Average Loss per frame')
-    #compare_loss()
+        plot_loss(avg_losses, output_n, 'main_ar_avg_errors_input_{:d}'.format(m),
+                  'Average Loss per frame: Auto Regression \n Input - {} Output - {} frames'.format(m, n))
+    compare_loss()
