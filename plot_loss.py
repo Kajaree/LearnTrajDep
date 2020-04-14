@@ -18,15 +18,15 @@ def plot_loss(losses, output_n, filename, title):
     plt.xlabel('frames')
     plt.ylabel('loss')
     plt.tight_layout(.5)
-    plt.legend(loc='lower right')
+    plt.legend(loc='upper right')
     plt.savefig("{}/{}.png".format(dir, filename), bbox_inches='tight')
     plt.show()
 
 
-def plot_loss_per_action(losses, output_n):
+def plot_loss_per_action(losses, input_n, output_n):
     for act, act_loss in losses.items():
         title = 'Loss per frame for {}'.format(act)
-        filename = "main_errors_{}".format(act)
+        filename = "main_ar_errors_{}_{}_{}".format(act, input_n, output_n)
         plot_loss(act_loss, output_n, filename, title)
 
 
@@ -74,6 +74,7 @@ def compare_loss():
 
 if __name__ == "__main__":
     output_n = [10, 25, 50, 100]
+    input_n = [10, 25]
     desired_acts = ['eating', 'posing', 'sitting', 'walkingdog']
     acts_losses = dict({'eating':{10:[], 25:[], 50:[], 100:[]},
                         'posing':{10:[], 25:[], 50:[], 100:[]},
@@ -82,13 +83,15 @@ if __name__ == "__main__":
                         'walkingdog':{10:[], 25:[], 50:[], 100:[]}})
     avg_losses = dict()
     acts = None
-    for n in output_n:
-        filename = 'checkpoint/logs/main_errors_{:d}.csv'.format(n)
-        acts, losses = calculate_loss(filename, n)
-        for act in desired_acts:
-            acts_losses[act][n] = losses[acts.index(act)]
-        mean_losses = np.mean(losses, axis=0)
-        avg_losses[n] = mean_losses.tolist()
-    plot_loss_per_action(acts_losses, output_n)
-    plot_loss(avg_losses, output_n, 'main_avg_errors', 'Average Loss per frame')
+    for m in input_n:
+        for n in output_n:
+            if m <= n:
+                filename = 'checkpoint/errors/main_ar_errors_{:d}_{:d}.csv'.format(m, n)
+                acts, losses = calculate_loss(filename, n)
+                for act in desired_acts:
+                    acts_losses[act][n] = losses[acts.index(act)]
+                mean_losses = np.mean(losses, axis=0)
+                avg_losses[n] = mean_losses.tolist()
+        plot_loss_per_action(acts_losses, m, output_n)
+        plot_loss(avg_losses, output_n, 'main_avg_errors_input_{:d}'.format(m), 'Average Loss per frame')
     #compare_loss()

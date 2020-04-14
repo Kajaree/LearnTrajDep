@@ -24,14 +24,13 @@ import utils.data_utils as data_utils
 import utils.viz as viz
 
 
-def save_loss_file(act, pred_expmap, targ_expmap, output_n):
+def save_loss_file(act, pred_expmap, targ_expmap, input_n, output_n):
     start = 0
     errors = []
     head = ['act', 'frame', 'error']
-    filename = 'checkpoint/logs/main_ar_errors_{:d}.csv'.format(output_n)
+    filename = 'checkpoint/errors/main_ar_errors_{:d}_{:d}.csv'.format(input_n, output_n)
     for id in range(output_n):
         err = np.linalg.norm(targ_expmap[:, start:id, :] - pred_expmap[:, start:id, :])
-        #err = torch.sum((pred_expmap - targ_expmap)**2)
         start = id
         errors.append([act, id, err])
 
@@ -41,7 +40,7 @@ def save_loss_file(act, pred_expmap, targ_expmap, output_n):
         writer.writerows(errors)
     return filename
 
-def main(opt, stepsize=10):
+def main(opt):
     is_cuda = torch.cuda.is_available()
     desired_acts = ['eating', 'posing', 'sitting', 'posing', 'walkingdog']
     # create model
@@ -49,12 +48,14 @@ def main(opt, stepsize=10):
     input_n = opt.input_n
     output_n = opt.output_n
     dct_n = opt.dct_n
+    #calculate stepsize for auto regression based on input fames and  DCT coefficients
+    stepsize = dct_n - input_n
     sample_rate = opt.sample_rate
     model = nnmodel.GCN(input_feature=(input_n + stepsize), hidden_feature=opt.linear_size, p_dropout=opt.dropout,
                         num_stage=opt.num_stage, node_n=48)
     if is_cuda:
         model.cuda()
-    model_path_len = "checkpoint/pretrained/h36m_in10_out10_dctn20.pth.tar"
+    model_path_len = "checkpoint/logs/ckpt_main_in{}_out{}_dctn{}_best.pth.tar".format(input_n, stepsize, dct_n)
     print(">>> loading ckpt len from '{}'".format(model_path_len))
     if is_cuda:
         ckpt = torch.load(model_path_len)
@@ -71,7 +72,7 @@ def main(opt, stepsize=10):
     test_data = dict()
     for act in acts:
         test_dataset = H36motion(path_to_data=opt.data_dir, actions=act, input_n=input_n, output_n=output_n,
-                                 dct_n=(stepsize + input_n), split=1, sample_rate=sample_rate)
+                                 dct_n=dct_n, split=1, sample_rate=sample_rate)
         test_data[act] = DataLoader(
             dataset=test_dataset,
             batch_size=opt.test_batch,
@@ -80,51 +81,56 @@ def main(opt, stepsize=10):
             pin_memory=True)
     dim_used = test_dataset.dim_used
     print(">>> data loaded !")
-    script_name = "error_in{:d}_out{:d}_dctn{:d}".format(opt.input_n, opt.output_n, opt.dct_n)
     model.eval()
     fig = plt.figure()
     ax = plt.gca(projection='3d')
-    filename = None
+    #calculate no of iterations in auto regression to perform
     iterations = int(output_n / stepsize)
+    print('iterations: {}'.format(iterations))
     for act in acts:
-        for i, (inputs, targets, all_seq) in enumerate(test_data[act]):
-            inputs = Variable(inputs).float()
+        for i, (_, targets, all_seq) in enumerate(test_data[act]):
             all_seq = Variable(all_seq).float()
-            if is_cuda:
-                inputs = inputs.cuda()
-                all_seq = all_seq.cuda()
-            outputs = None
-            y_hat = None
-            if iterations > 1:
-                for i in range(iterations):
-                    if y_hat is None:
-                        y = model(inputs)
-                    else:
-                        y = model(y_hat)
-                    y_hat = y
-                    if outputs is None:
-                        outputs = y_hat
-                    else:
-                        outputs = torch.cat((outputs, y_hat), 2)
-                outputs = torch.cat((inputs[:, :, input_n:], outputs[:, :, input_n*iterations:]), 2)
-            else:
-                outputs = model(inputs)
-            print(outputs.shape)
-            n, seq_len, dim_full_len = all_seq.data.shape
             dim_used_len = len(dim_used)
-            _, idct_m = data_utils.get_dct_matrix(seq_len)
+            if is_cuda:
+                all_seq = all_seq.cuda()
+            dct_m_in, _ = data_utils.get_dct_matrix(dct_n)
+            dct_m_in = Variable(torch.from_numpy(dct_m_in)).float().cuda()
+            _, idct_m = data_utils.get_dct_matrix(dct_n)
             idct_m = Variable(torch.from_numpy(idct_m)).float().cuda()
-            outputs_t = outputs.view(-1, seq_len).transpose(0, 1)
-            outputs_exp = torch.matmul(idct_m, outputs_t).transpose(0, 1).contiguous().view(-1, dim_used_len,
-                                                                                            seq_len).transpose(1, 2)
+            targ_expmap = all_seq.cpu().data.numpy()
+            y_hat = None
+            #Auto regression
+            for idx in range(iterations):
+                #start index of the input sequence
+                start = input_n + idx * stepsize
+                #end index of the input sequence
+                stop = start + stepsize
+                if y_hat is None:
+                    #slice the sequence of length = (input_n + output_n) in iteration 1
+                    input_seq = all_seq[:, :dct_n, dim_used]
+                else:
+                    #stack output from prev iteration and next frames to form the next input seq
+                    input_seq = torch.cat((y_hat, all_seq[:, start:stop, dim_used]), 1)
+                #calculate DCT of the input seq
+                input_dct_seq = torch.matmul(dct_m_in, input_seq).transpose(1, 2)
+                if is_cuda:
+                    input_dct_seq = input_dct_seq.cuda()
+                y = model(input_dct_seq)
+                y_t = y.view(-1, dct_n).transpose(0, 1)
+                y_exp = torch.matmul(idct_m, y_t).transpose(0, 1).contiguous().view(-1, dim_used_len,
+                                                                                        dct_n).transpose(1, 2)
+                y_hat = y_exp[:, stepsize:, :]
+                #accumulate the output frames in a single tensor
+                if idx == 0:
+                    outputs = y_exp
+                else:
+                    outputs = torch.cat((outputs, y_exp[:, input_n:, :]), 1)
             pred_expmap = all_seq.clone()
             dim_used = np.array(dim_used)
-            print(outputs_exp.shape)
-            pred_expmap[:, :, dim_used] = outputs_exp
-            targ_expmap = all_seq
+            pred_expmap[:, :, dim_used] = outputs
             pred_expmap = pred_expmap.cpu().data.numpy()
-            targ_expmap = targ_expmap.cpu().data.numpy()
-            #save_loss_file(act, pred_expmap, targ_expmap, output_n)
+            #calculate loss and save to a file for later use
+            save_loss_file(act, pred_expmap, targ_expmap, input_n, output_n)
             if act in desired_acts:
                 for k in range(8):
                     plt.cla()
