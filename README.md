@@ -140,24 +140,44 @@ For a brief introduction to auto-regressive approach, please check [this link](h
 The direct approach did not work well as expected. Below is a predicted sequence for the action 'eating' when we tried predicting a sequence of length 2 seconds.
 ![eating_50_50](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/sequence_videos/eating_50_50.gif)
 
-The graph below shows the comparison of average losses for sequeses of length 0.5 seconds, 1 seconds and 2 seconds.
-![average_loss](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/plots/main_avg_errors.png)
-
-The auto-regression approach performed very poorly. Below are some predicted sequences for the action 'walking dog' when we tried predicting a sequence of length 2 seconds and 4 seconds.
-
-![walkingdog_ar_10_50](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/sequence_videos/w.gif)
+The graphs below show the comparison of average losses for input sequence of 0.5 seconds and 1 second.
+![average_loss_input10](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/plots/main_avg_errors_input_10.png)
+![average_loss_input25](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/plots/main_avg_errors_input_25.png)
 
 
-
-![walkingdog_ar_10_100](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/sequence_videos/walking_ar_100.gif)
-
-To run the code for auto regression use the following command:
+The auto-regression approach performed really well. To run the code for auto regression use the following command:
 ```bash
 python demo.py --input_n 10 --output_n 100 --dct_n 20 --data_dir [Path To Your H36M data]/h3.6m/dataset/
 ```
+Below are some predicted sequences for the action 'walking dog' when we tried predicting a sequence of length 2 seconds and 4 seconds.
 
-The graph below shows the comparison of average losses for sequeses of length 0.5 seconds, 1 seconds, 2 seconds and 4 seconds.
 
-![average_loss_ar](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/plots/main_ar_avg_errors.png)
 
+The graphs below show the comparison of average losses for input sequence of 0.5 seconds and 1 second in auto-regression.
+![average_loss_ar_input10](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/plots/main_ar_avg_errors_input_10.png)
+![average_loss_input25](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/plots/main_ar_avg_errors_input_25.png)
+
+We experimented under different setups and the overall average results at different time are reported below.
+
+Human3.6-short-term prediction on angle space (top) and 3D coordinate (bottom)
+
+For input sequence of 0.5 seconds:
+
+|                  | 80ms   | 160ms  | 320ms  | 400ms  |
+|------------------|--------|--------|--------|--------|
+| Direct           | 1.21 | 1.64 | 1.78 | 1.99|
+| Auto-regression  | 0.56 | 0.56 | 0.61 | 0.78|
+|----------------|------|------|------|------|
+| Direct | 99.99 | 128.61 | 144.44 | 171.12 |
+| Auto-regression | 52.25 | 51.81 | 56.50 | 72.24|
+
+For input sequence of 1 second:
+
+|                  | 80ms   | 160ms  | 320ms  | 400ms  |
+|------------------|--------|--------|--------|--------|
+| Direct           | 1.28 | 1.68 | 1.78 | 1.99|
+| Auto-regression  | 0.56 | 0.56 | 0.61 | 0.78 |
+|----------------|------|------|------|------|
+| Direct | 102.96 | 129.69 | 143.64 | 173.42 |
+| Auto-regression | 66.31 | 67.60 | 76.73 | 74.68 |
 
