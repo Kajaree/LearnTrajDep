@@ -149,12 +149,17 @@ The auto-regression approach performed really well. To run the code for auto reg
 ```bash
 python demo.py --input_n 10 --output_n 100 --dct_n 20 --data_dir [Path To Your H36M data]/h3.6m/dataset/
 ```
-Below are some predicted sequences for the action 'walking dog' when we tried predicting a sequence of length 2 seconds and 4 seconds.
+Below are some predicted sequences for the action 'eating' when we tried predicting a sequence of length of 4 seconds using input sequences of length 0.5 sec and 1 sec respectively.
 
-
+![eating_ar_10_100](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/sequence_videos/eating_ar_10_100.gif)
+![eating_ar_25_100](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/sequence_videos/eating_ar_25_100.gif)
 
 The graphs below show the comparison of average losses for input sequence of 0.5 seconds and 1 second in auto-regression.
+
+
+
 ![average_loss_ar_input10](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/plots/main_ar_avg_errors_input_10.png)
+
 ![average_loss_input25](https://github.com/Kajaree/LearnTrajDep/blob/master/checkpoint/plots/main_ar_avg_errors_input_25.png)
 
 We experimented under different setups and the overall average results at different time are reported below.
