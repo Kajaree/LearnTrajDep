@@ -163,7 +163,7 @@ Human3.6-short-term prediction on angle space (top) and 3D coordinate (bottom)
 
 For input sequence of 0.5 seconds:
 
-|                  | 80ms   | 160ms  | 320ms  | 400ms  |
+|                  | 560ms   | 1000ms  | 2000ms  | 4000ms  |
 |------------------|--------|--------|--------|--------|
 | Direct           | 1.21 | 1.64 | 1.78 | 1.99|
 | Auto-regression  | 0.56 | 0.56 | 0.61 | 0.78|
@@ -173,7 +173,7 @@ For input sequence of 0.5 seconds:
 
 For input sequence of 1 second:
 
-|                  | 80ms   | 160ms  | 320ms  | 400ms  |
+|                  | 560ms   | 1000ms  | 2000ms  | 4000ms |
 |------------------|--------|--------|--------|--------|
 | Direct           | 1.28 | 1.68 | 1.78 | 1.99|
 | Auto-regression  | 0.56 | 0.56 | 0.61 | 0.78 |
